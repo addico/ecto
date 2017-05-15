@@ -7,7 +7,7 @@ defmodule Ecto.Migration.SchemaMigration do
 
   @primary_key false
   schema "schema_migrations" do
-    field :version, :integer
+    field :version, :integer, primary_key: true
     timestamps updated_at: false
   end
 
@@ -27,7 +27,19 @@ defmodule Ecto.Migration.SchemaMigration do
   end
 
   def down(repo, version, prefix) do
-    repo.delete_all from(p in {get_source(repo), __MODULE__}, where: p.version == ^version) |> Map.put(:prefix, prefix), @opts
+    #repo.delete_all from(p in {get_source(repo), __MODULE__}, where: p.version == ^version) |> Map.put(:prefix, prefix), @opts
+
+    delete_all(repo, version, prefix)
+  end
+
+  defp delete_all(repo, version, prefix) do
+    q = from(p in {get_source(repo), __MODULE__}, where: p.version == ^version)
+    |> Map.put(:prefix, prefix)
+
+    results = repo.all(q)
+    Enum.each(results, &repo.delete!(&1, @opts))
+
+    {Enum.count(results), nil}
   end
 
   def get_source(repo) do
