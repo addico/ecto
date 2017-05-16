@@ -27,11 +27,11 @@ defmodule Ecto.Migration.SchemaMigration do
   end
 
   def down(repo, version, prefix) do
-    #repo.delete_all from(p in {get_source(repo), __MODULE__}, where: p.version == ^version) |> Map.put(:prefix, prefix), @opts
-
     delete_all(repo, version, prefix)
   end
 
+  # Repo.delete_all/2 is broken for mysql when using prefixes.
+  # https://github.com/elixir-ecto/ecto/issues/2060
   defp delete_all(repo, version, prefix) do
     q = from(p in {get_source(repo), __MODULE__}, where: p.version == ^version)
     |> Map.put(:prefix, prefix)

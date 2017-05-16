@@ -35,8 +35,8 @@ defmodule Ecto.Migration.Runner do
   Stores the runner metadata.
   """
   def metadata(runner, opts) do
-    prefix = opts[:prefix]
-    Process.put(:ecto_migration, %{runner: runner, prefix: prefix && to_string(prefix)})
+    {prefix, opts} = Keyword.pop(opts, :prefix)
+    Process.put(:ecto_migration, %{runner: runner, prefix: prefix && to_string(prefix), opts: opts})
   end
 
   @doc """
@@ -76,6 +76,16 @@ defmodule Ecto.Migration.Runner do
   def prefix do
     case Process.get(:ecto_migration) do
       %{prefix: prefix} -> prefix
+      _ -> raise "could not find migration runner process for #{inspect self()}"
+    end
+  end
+
+  @doc """
+  Gets the opts for this migration
+  """
+  def opts do
+    case Process.get(:ecto_migration) do
+      %{opts: opts} -> opts
       _ -> raise "could not find migration runner process for #{inspect self()}"
     end
   end
