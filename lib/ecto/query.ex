@@ -399,12 +399,17 @@ defmodule Ecto.Query do
       from e in subquery(query), select: avg(e.salary)
 
   """
-  def subquery(%Ecto.SubQuery{} = subquery),
-    do: subquery
-  def subquery(%Ecto.Query{} = query),
-    do: %Ecto.SubQuery{query: query}
-  def subquery(queryable),
-    do: %Ecto.SubQuery{query: Ecto.Queryable.to_query(queryable)}
+  def subquery(query, opts \\ []) do
+    subquery = wrap_in_subquery(query)
+    case Keyword.fetch(opts, :prefix) do
+      {:ok, prefix} when is_binary(prefix) -> put_in(subquery.query.prefix, prefix)
+      :error -> subquery
+    end
+  end
+
+  defp wrap_in_subquery(%Ecto.SubQuery{} = subquery), do: subquery
+  defp wrap_in_subquery(%Ecto.Query{} = query), do: %Ecto.SubQuery{query: query}
+  defp wrap_in_subquery(queryable), do: %Ecto.SubQuery{query: Ecto.Queryable.to_query(queryable)}
 
   @doc """
   Resets a previously set field on a query.
