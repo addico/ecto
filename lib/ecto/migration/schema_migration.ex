@@ -33,7 +33,15 @@ defmodule Ecto.Migration.SchemaMigration do
   def down(repo, version, prefix) do
     from(p in {get_source(repo), __MODULE__}, where: p.version == ^version)
     |> Map.put(:prefix, prefix)
-    |> repo.delete_all(@opts)
+    |> delete_all(repo)
+  end
+
+  # Repo.delete_all/2 is broken for mysql when using prefixes.
+  # https://github.com/elixir-ecto/ecto/issues/2060
+  defp delete_all(q, repo) do
+    results = repo.all(q)
+    Enum.each(results, &repo.delete!(&1, @opts))
+    {Enum.count(results), nil}
   end
 
   def get_source(repo) do
